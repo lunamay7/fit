@@ -1,0 +1,522 @@
+import React, { useState, useEffect } from 'react';
+import { CheckCircle2, Circle, Target, Droplets, Dumbbell, Apple, Sparkles, Calendar, TrendingUp, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
+
+const PersonalDevelopmentPlan = () => {
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dailyData, setDailyData] = useState({});
+  const [tempChecks, setTempChecks] = useState({});
+  const [showStats, setShowStats] = useState(false);
+
+  // Data de início do plano
+  const startDate = new Date('2025-06-30');
+
+  // Função para calcular qual semana baseada na data
+  const getWeekNumber = (dateStr) => {
+    const currentDate = new Date(dateStr);
+    const diffTime = currentDate.getTime() - startDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const weekNum = Math.floor(diffDays / 7) + 1;
+    return Math.min(Math.max(weekNum, 1), 4);
+  };
+
+  // Função para verificar se é segunda-feira (dia de descanso)
+  const isRestDay = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.getDay() === 1; // 1 = segunda-feira
+  };
+
+  // Resetar checks temporários quando muda o dia
+  useEffect(() => {
+    setTempChecks({});
+  }, [selectedDate]);
+
+  // Inicializar dados do dia atual se não existirem
+  useEffect(() => {
+    if (!dailyData[selectedDate]) {
+      setDailyData(prev => ({
+        ...prev,
+        [selectedDate]: {
+          conquests: {}, // Para estatísticas permanentes
+          waterIntake: 0,
+          week: getWeekNumber(selectedDate)
+        }
+      }));
+    }
+  }, [selectedDate]);
+
+  const getCurrentDayData = () => {
+    return dailyData[selectedDate] || { conquests: {}, waterIntake: 0, week: getWeekNumber(selectedDate) };
+  };
+
+  // Estrutura das 4 semanas de transição
+  const weeklyPlan = {
+    1: {
+      title: "Semana 1: Fundação & Adaptação (30/06 - 06/07)",
+      calories: "1900-2000 kcal",
+      focus: "Estabelecer rotina básica e eliminar bebidas calóricas",
+      exercises: {
+        alongamento: "10-15 minutos de alongamento básico",
+        caminhada: "15-20 minutos de caminhada leve",
+        cardio: "10-15 minutos de cardio básico em casa"
+      }
+    },
+    2: {
+      title: "Semana 2: Intensificação Suave (07/07 - 13/07)",
+      calories: "1850-1950 kcal", 
+      focus: "Reduzir processados e aumentar vegetais",
+      exercises: {
+        alongamento: "15-20 minutos de alongamento completo",
+        caminhada: "20-25 minutos de caminhada moderada",
+        cardio: "15-20 minutos de cardio intermediário"
+      }
+    },
+    3: {
+      title: "Semana 3: Aceleração (14/07 - 20/07)",
+      calories: "1800-1900 kcal",
+      focus: "Eliminar frituras e carnes vermelhas nos dias de semana",
+      exercises: {
+        alongamento: "20-25 minutos de alongamento avançado",
+        caminhada: "25-30 minutos de caminhada acelerada",
+        cardio: "20-25 minutos de cardio intenso"
+      }
+    },
+    4: {
+      title: "Semana 4: Consolidação (21/07 - 27/07)",
+      calories: "1750-1850 kcal",
+      focus: "Padrão alimentar definitivo estabelecido",
+      exercises: {
+        alongamento: "25-30 minutos de alongamento completo",
+        caminhada: "30-40 minutos de caminhada vigorosa",
+        cardio: "25-30 minutos de cardio avançado"
+      }
+    }
+  };
+
+  const currentWeek = getWeekNumber(selectedDate);
+  const isMonday = isRestDay(selectedDate);
+
+  // Checklist de conquistas (permanente para estatísticas)
+  const conquestTasks = [
+    {
+      category: "Hidratação",
+      icon: <Droplets className="w-5 h-5 text-blue-500" />,
+      task: "Bebeu 3,5L de água completos",
+      id: "water_complete"
+    },
+    {
+      category: "Exercício",
+      icon: <Dumbbell className="w-5 h-5 text-green-500" />,
+      task: isMonday ? "Dia de descanso respeitado" : "Completou todos os 3 exercícios do dia",
+      id: "exercise_complete"
+    },
+    {
+      category: "Alimentação",
+      icon: <Apple className="w-5 h-5 text-red-500" />,
+      task: `Manteve ${weeklyPlan[currentWeek]?.calories} e seguiu diretrizes`,
+      id: "nutrition_complete"
+    },
+    {
+      category: "Cuidados Estéticos",
+      icon: <Sparkles className="w-5 h-5 text-pink-500" />,
+      task: "Completou rotinas matinal e noturna",
+      id: "beauty_complete"
+    }
+  ];
+
+  // Exercícios do dia (checklist temporário)
+  const todayExercises = isMonday ? [
+    { id: "rest", name: "🛋️ Dia de descanso - relaxe!", done: false }
+  ] : [
+    { id: "alongamento", name: `🧘‍♀️ ${weeklyPlan[currentWeek]?.exercises.alongamento}`, done: false },
+    { id: "caminhada", name: `🚶‍♀️ ${weeklyPlan[currentWeek]?.exercises.caminhada}`, done: false },
+    { id: "cardio", name: `💪 ${weeklyPlan[currentWeek]?.exercises.cardio}`, done: false }
+  ];
+
+  // Diretrizes alimentares (checklist temporário)
+  const nutritionChecks = [
+    { id: "eliminate_drinks", name: "❌ Evitei refrigerantes, sucos e bebidas calóricas", done: false },
+    { id: "eliminate_fried", name: "❌ Evitei alimentos fritos", done: false },
+    { id: "reduce_processed", name: "⚠️ Limitei alimentos processados", done: false },
+    { id: "reduce_red_meat", name: "⚠️ Consumi carne vermelha com moderação", done: false },
+    { id: "increase_vegetables", name: "✅ Inclui vegetais em pelo menos 2 refeições", done: false },
+    { id: "natural_foods", name: "✅ Priorizei alimentos naturais", done: false }
+  ];
+
+  // Rotina de beleza (checklist temporário)
+  const beautyChecks = [
+    { id: "morning_face", name: "🌅 Limpeza e hidratação facial matinal", done: false },
+    { id: "morning_body", name: "🌅 Hidratação corporal matinal", done: false },
+    { id: "night_cleanse", name: "🌙 Demaquilagem e limpeza noturna", done: false },
+    { id: "night_care", name: "🌙 Cuidados noturnos completos", done: false },
+    { id: "hair_care", name: "💇‍♀️ Cuidados com cabelo", done: false }
+  ];
+
+  const toggleConquest = (taskId) => {
+    setDailyData(prev => ({
+      ...prev,
+      [selectedDate]: {
+        ...prev[selectedDate],
+        conquests: {
+          ...prev[selectedDate]?.conquests,
+          [taskId]: !prev[selectedDate]?.conquests?.[taskId]
+        }
+      }
+    }));
+  };
+
+  const toggleTempCheck = (category, taskId) => {
+    setTempChecks(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [taskId]: !prev[category]?.[taskId]
+      }
+    }));
+  };
+
+  const updateWater = (glasses) => {
+    setDailyData(prev => ({
+      ...prev,
+      [selectedDate]: {
+        ...prev[selectedDate],
+        waterIntake: glasses
+      }
+    }));
+  };
+
+  const changeDate = (direction) => {
+    const current = new Date(selectedDate);
+    current.setDate(current.getDate() + direction);
+    setSelectedDate(current.toISOString().split('T')[0]);
+  };
+
+  const getDateStats = () => {
+    const totalDays = Object.keys(dailyData).length;
+    let perfectDays = 0;
+    let totalWaterDays = 0;
+    let exerciseDays = 0;
+    
+    Object.values(dailyData).forEach(day => {
+      const conquests = Object.values(day.conquests || {}).filter(Boolean).length;
+      if (conquests === conquestTasks.length && day.waterIntake >= 14) perfectDays++;
+      if (day.waterIntake >= 14) totalWaterDays++;
+      if (day.conquests?.exercise_complete) exerciseDays++;
+    });
+
+    return { totalDays, perfectDays, totalWaterDays, exerciseDays };
+  };
+
+  const waterGoal = 14; // 3.5L = 14 copos de 250ml
+  const currentDayData = getCurrentDayData();
+  const { conquests, waterIntake } = currentDayData;
+
+  return (
+    <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-pink-50 to-blue-50 min-h-screen">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-800 mb-2">
+          Transformação 360° - Plano Personalizado
+        </h1>
+        <p className="text-gray-600 mb-4">Meta: -25kg de forma saudável e sustentável</p>
+        
+        {/* Navegação de Data */}
+        <div className="bg-white rounded-lg p-4 shadow-md inline-block mb-4">
+          <div className="flex items-center justify-between space-x-4">
+            <button 
+              onClick={() => changeDate(-1)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            
+            <div className="text-center">
+              <p className="text-sm text-gray-500">Data selecionada</p>
+              <p className="font-semibold">{new Date(selectedDate).toLocaleDateString('pt-BR')}</p>
+              <p className="text-xs text-blue-600 font-medium">
+                Semana {currentWeek} • {isMonday ? 'Segunda (Descanso)' : 'Dia de Treino'}
+              </p>
+              <p className="text-xs text-gray-400">
+                TMB: 1700 kcal | Meta: {weeklyPlan[currentWeek]?.calories}
+              </p>
+            </div>
+            
+            <button 
+              onClick={() => changeDate(1)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+              disabled={selectedDate >= new Date().toISOString().split('T')[0]}
+            >
+              <ChevronRight className={`w-5 h-5 ${selectedDate >= new Date().toISOString().split('T')[0] ? 'text-gray-300' : ''}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Botão de Estatísticas */}
+        <div className="flex justify-center space-x-4">
+          <button
+            onClick={() => setShowStats(!showStats)}
+            className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 flex items-center space-x-2"
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>Ver Estatísticas</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Painel de Estatísticas */}
+      {showStats && (
+        <div className="mb-8 bg-white rounded-lg p-6 shadow-md">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+            <TrendingUp className="w-6 h-6 mr-2 text-purple-500" />
+            Suas Estatísticas
+          </h2>
+          <div className="grid md:grid-cols-4 gap-4">
+            <div className="bg-green-50 p-4 rounded-lg text-center">
+              <div className="text-3xl font-bold text-green-600">{getDateStats().perfectDays}</div>
+              <div className="text-sm text-green-700">Dias Perfeitos</div>
+              <div className="text-xs text-gray-500">Todas as conquistas</div>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg text-center">
+              <div className="text-3xl font-bold text-blue-600">{getDateStats().totalWaterDays}</div>
+              <div className="text-sm text-blue-700">Meta de Água</div>
+              <div className="text-xs text-gray-500">Dias com 3,5L completos</div>
+            </div>
+            <div className="bg-orange-50 p-4 rounded-lg text-center">
+              <div className="text-3xl font-bold text-orange-600">{getDateStats().exerciseDays}</div>
+              <div className="text-sm text-orange-700">Exercícios</div>
+              <div className="text-xs text-gray-500">Dias com treino completo</div>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg text-center">
+              <div className="text-3xl font-bold text-purple-600">{getDateStats().totalDays}</div>
+              <div className="text-sm text-purple-700">Dias Registrados</div>
+              <div className="text-xs text-gray-500">Total no plano</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Informação da Semana Atual */}
+      <div className="mb-8">
+        <div className="bg-white rounded-lg p-6 shadow-md">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            {weeklyPlan[currentWeek].title}
+          </h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-green-50 p-3 rounded-lg">
+              <h3 className="font-semibold text-green-700">Calorias</h3>
+              <p className="text-sm">{weeklyPlan[currentWeek].calories}</p>
+            </div>
+            <div className="bg-purple-50 p-3 rounded-lg">
+              <h3 className="font-semibold text-purple-700">Foco da Semana</h3>
+              <p className="text-sm">{weeklyPlan[currentWeek].focus}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid Principal */}
+      <div className="grid lg:grid-cols-2 gap-8 mb-8">
+        {/* Checklist de Conquistas (Permanente) */}
+        <div className="bg-white rounded-lg p-6 shadow-md">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+            <Target className="w-6 h-6 mr-2 text-blue-500" />
+            Conquistas do Dia 🏆
+          </h2>
+          
+          <div className="mb-4">
+            {selectedDate < new Date().toISOString().split('T')[0] && (
+              <div className="bg-blue-50 p-2 rounded text-sm text-blue-700">
+                📅 Visualizando dia anterior - Dados salvos
+              </div>
+            )}
+            {selectedDate === new Date().toISOString().split('T')[0] && (
+              <div className="bg-green-50 p-2 rounded text-sm text-green-700">
+                ✨ Hoje - Marque suas conquistas!
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-4">
+            {conquestTasks.map((task) => (
+              <div key={task.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                <button
+                  onClick={() => toggleConquest(task.id)}
+                  className="mt-1 flex-shrink-0"
+                >
+                  {conquests[task.id] ? 
+                    <CheckCircle2 className="w-6 h-6 text-green-500" /> : 
+                    <Circle className="w-6 h-6 text-gray-400" />
+                  }
+                </button>
+                <div className="flex-1">
+                  <div className="flex items-center mb-1">
+                    {task.icon}
+                    <span className="ml-2 font-medium text-sm text-gray-600">
+                      {task.category}
+                    </span>
+                  </div>
+                  <p className={`text-sm ${conquests[task.id] ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                    {task.task}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Controle de Água */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h3 className="font-semibold text-blue-700 mb-2">Controle de Hidratação</h3>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm">Copos bebidos: {waterIntake}/{waterGoal}</span>
+              <span className="text-sm font-medium">
+                {((waterIntake/waterGoal) * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="w-full bg-blue-200 rounded-full h-2 mb-3">
+              <div 
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${Math.min((waterIntake/waterGoal) * 100, 100)}%` }}
+              ></div>
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => updateWater(Math.max(0, waterIntake - 1))}
+                className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+              >
+                -1
+              </button>
+              <button
+                onClick={() => updateWater(Math.min(waterGoal, waterIntake + 1))}
+                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+              >
+                +1
+              </button>
+              <button
+                onClick={() => updateWater(0)}
+                className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Exercícios do Dia (Temporário) */}
+        <div className="bg-white rounded-lg p-6 shadow-md">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+            <Dumbbell className="w-6 h-6 mr-2 text-green-500" />
+            Exercícios do Dia 💪
+          </h2>
+          
+          <div className="space-y-3">
+            {todayExercises.map((exercise) => (
+              <div key={exercise.id} className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                <button
+                  onClick={() => toggleTempCheck('exercises', exercise.id)}
+                  className="flex-shrink-0"
+                >
+                  {tempChecks.exercises?.[exercise.id] ? 
+                    <CheckCircle2 className="w-6 h-6 text-green-500" /> : 
+                    <Circle className="w-6 h-6 text-gray-400" />
+                  }
+                </button>
+                <p className={`text-sm ${tempChecks.exercises?.[exercise.id] ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                  {exercise.name}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {!isMonday && (
+            <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+              <p className="text-sm text-yellow-700">
+                <strong>Dica:</strong> Use sua plataforma online de fitness para encontrar vídeos específicos!
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Guias com Checklists Temporários */}
+      <div className="grid lg:grid-cols-2 gap-8">
+        {/* Alimentação */}
+        <div className="bg-white rounded-lg p-6 shadow-md">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+            <Apple className="w-6 h-6 mr-2 text-red-500" />
+            Checklist Alimentar 🥗
+          </h2>
+          
+          <div className="space-y-3">
+            {nutritionChecks.map((check) => (
+              <div key={check.id} className="flex items-start space-x-3 p-3 bg-red-50 rounded-lg">
+                <button
+                  onClick={() => toggleTempCheck('nutrition', check.id)}
+                  className="mt-0.5 flex-shrink-0"
+                >
+                  {tempChecks.nutrition?.[check.id] ? 
+                    <CheckCircle2 className="w-5 h-5 text-green-500" /> : 
+                    <Circle className="w-5 h-5 text-gray-400" />
+                  }
+                </button>
+                <p className={`text-sm ${tempChecks.nutrition?.[check.id] ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                  {check.name}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Cuidados Estéticos */}
+        <div className="bg-white rounded-lg p-6 shadow-md">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+            <Sparkles className="w-6 h-6 mr-2 text-pink-500" />
+            Checklist de Beleza ✨
+          </h2>
+          
+          <div className="space-y-3">
+            {beautyChecks.map((check) => (
+              <div key={check.id} className="flex items-start space-x-3 p-3 bg-pink-50 rounded-lg">
+                <button
+                  onClick={() => toggleTempCheck('beauty', check.id)}
+                  className="mt-0.5 flex-shrink-0"
+                >
+                  {tempChecks.beauty?.[check.id] ? 
+                    <CheckCircle2 className="w-5 h-5 text-green-500" /> : 
+                    <Circle className="w-5 h-5 text-gray-400" />
+                  }
+                </button>
+                <p className={`text-sm ${tempChecks.beauty?.[check.id] ? 'line-through text-gray-500' : 'text-gray-700'}`}>
+                  {check.name}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 p-3 bg-purple-50 rounded-lg">
+            <h3 className="font-semibold text-purple-700 mb-2">📅 Cuidados Semanais</h3>
+            <ul className="text-sm space-y-1">
+              <li className="text-purple-600">• Cuidar das unhas das mãos e pés</li>
+              <li className="text-purple-600">• Fazer as sobrancelhas</li>
+              <li className="text-purple-600">• Máscara facial 1-2x/semana</li>
+              <li className="text-purple-600">• Tratamento capilar</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Lembrete Motivacional */}
+      <div className="mt-8 bg-gradient-to-r from-purple-500 to-pink-500 text-white p-6 rounded-lg shadow-lg text-center">
+        <h2 className="text-2xl font-bold mb-2">💪 Lembre-se</h2>
+        <p className="mb-2">
+          Você está na Semana {currentWeek} • TMB: 1700 kcal • Meta: {weeklyPlan[currentWeek]?.calories}
+        </p>
+        <p className="text-sm opacity-90">
+          {isMonday ? 
+            "Segunda é dia de descanso! Relaxe e prepare-se para a semana! 🛋️" :
+            "Seja rigorosa, mas gentil consigo mesma. Cada exercício te aproxima do seu objetivo! 🌟"
+          }
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default PersonalDevelopmentPlan;
